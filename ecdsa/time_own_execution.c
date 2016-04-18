@@ -20,15 +20,6 @@ static __inline__ unsigned long rdtsc(void)
   return ( (unsigned long)lo)|( ((unsigned long)hi)<<32 );
 }
 
-//#define CALIBRATION
-
-#ifdef CALIBRATION
-
-BIGNUM* group_order;
-BIGNUM* generated_k;
-
-#endif 
-
 /*
     NID_sect163k1 is the NIST Binary-Curve K-163
     NID_sect163r2 is the NIST Binary-Curve B-163
@@ -54,7 +45,6 @@ int main(int argc, char** argv) {
     char* bn_dec;
 
     FILE* theoutputfile = fdopen(1, "w");
-    FILE* privatekey = fopen("privatekey", "w");
 
     if ((ctx=BN_CTX_new()) == NULL) goto err;
 
@@ -79,22 +69,24 @@ int main(int argc, char** argv) {
     pubkey = EC_KEY_get0_public_key(eckey);
     if (!EC_POINT_get_affine_coordinates_GF2m(group, pubkey, x, y, ctx)) goto err; 
 
+    FILE* publickey = fopen("publickey", "w");
     bn_dec = BN_bn2dec(x);
-    fprintf(privatekey, "%s,", bn_dec);
+    fprintf(publickey, "%s,", bn_dec);
     free(bn_dec);
     bn_dec = BN_bn2dec(y);
-    fprintf(privatekey, "%s\n", bn_dec);
+    fprintf(publickey, "%s\n", bn_dec);
     free(bn_dec);
+    fclose(publickey);
 
     /* Print out the private key */
+    FILE* privatekey = fopen("privatekey", "w");
     bn_dec = BN_bn2dec(EC_KEY_get0_private_key(eckey));
     fprintf(privatekey, "%s\n", bn_dec);
     free(bn_dec);
+    fclose(privatekey);
     
     m = BN_new();
     if (!m) goto err;
-    
-    fclose(privatekey);
 
     for (i = 0; i < 10000; i++) {
         // Digest a 'random' string to sign with SHA-1
@@ -128,13 +120,6 @@ int main(int argc, char** argv) {
         free(bn_dec);
 
         fprintf(theoutputfile, "%lld\n", after - before);
-
-
-#ifdef CALIBRATION
-        bn_dec = BN_bn2dec(generated_k);
-        fprintf(theoutputfile, "%i,", log_k);// BN_num_bits(generated_k));
-        free(bn_dec);
-#endif
     }
 
 
