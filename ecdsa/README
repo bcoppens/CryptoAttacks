@@ -1,3 +1,0 @@
-This directory contains an implementation in Sage of attacks in 'Lattice Attacks on Digital Signature Schemes' by N.A. Howgrave-Graham and N.P. Smart. The actual application that is attacked is an old OpenSSL implementation of ECDSA, as demonstrated in 'Remote Timing Attacks are Still Practical', by B.B. Brumley and N. Tuveri.
-
-Currently this repository is in progress, cleaning up my local attack scripts, stay tuned! :-)
