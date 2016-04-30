@@ -16,7 +16,7 @@
 static __inline__ unsigned long rdtsc(void)
 {
   unsigned int hi, lo;
-  __asm__ __volatile__ ("xorl %%eax, %%eax; cpuid; rdtsc" : "=a"(lo), "=d"(hi));
+  __asm__ __volatile__ ("xorl %%eax, %%eax; cpuid; rdtsc" : "=a"(lo), "=d"(hi) : : "ebx", "ecx");
   return ( (unsigned long)lo)|( ((unsigned long)hi)<<32 );
 }
 
